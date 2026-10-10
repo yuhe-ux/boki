@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const QUESTIONS = [
+  const BASE_QUESTIONS = [
     {id:'C01',subject:'商業簿記・会計学',topic:'連結会計',type:'mcq',q:'親会社から子会社への商品売買で、期末在庫に未実現利益が含まれている。連結上の基本処理は？',choices:['売上高だけ消去する','棚卸資産を減額し、売上原価を調整する','利益剰余金だけ減額する','処理しない'],answer:1,ex:'企業集団内部で実現していない利益は連結上消去します。期末棚卸資産から未実現利益を控除し、売上原価を調整します。'},
     {id:'C02',subject:'商業簿記・会計学',topic:'連結会計',type:'mcq',q:'親会社の子会社株式と相殺消去する中心的な項目は？',choices:['子会社の売上高','子会社の資本金等のうち親会社持分','子会社の現金','親会社の借入金'],answer:1,ex:'資本連結では、親会社の子会社株式と子会社の純資産のうち親会社持分を相殺します。'},
     {id:'C03',subject:'商業簿記・会計学',topic:'連結会計',type:'number',q:'子会社への売上高が1,200万円、売上原価率が80%。期末にその商品の25%が子会社に残っている。未実現利益はいくら？',answer:600000,tolerance:0,note:'円単位で入力',ex:'内部利益率は20%。期末在庫の内部売価は1,200万円×25%=300万円。未実現利益=300万円×20%=60万円。'},
@@ -41,6 +41,18 @@
     {id:'I18',subject:'工業簿記・原価計算',topic:'原価差異',type:'journal',q:'製造間接費差異が不利差異10万円で、売上原価へ賦課する場合の基本的な方向は？',choices:['（借）売上原価／（貸）製造間接費差異','（借）製造間接費差異／（貸）売上原価','（借）現金／（貸）売上原価','仕訳なし'],answer:0,ex:'不利差異を売上原価へ賦課する場合、売上原価を増加させる方向で処理します。'}
   ];
 
+  const CPA_QUESTIONS = [...(window.CPA_PART1_QUESTIONS || []), ...(window.CPA_ALL_SOURCE_QUESTIONS || [])];
+  const QUESTIONS = [...CPA_QUESTIONS, ...BASE_QUESTIONS];
+  const BOOK_OPTIONS = [
+    ['P1','商会 教科書 第Ⅰ部'],['P2','商会 教科書 第Ⅱ部'],['P3','商会 教科書 第Ⅲ部'],
+    ['G1','工原 教科書 第Ⅰ部'],['G2','工原 教科書 第Ⅱ部'],
+    ['R17','レジュメ #17 標準原価計算②'],['R18','レジュメ #18 標準原価計算③'],
+    ['R19','レジュメ #19 直接原価計算'],['R22','レジュメ #22 予算管理②'],
+    ['R24','レジュメ #24 意思決定会計'],['R32','レジュメ #32 内部振替価格']
+  ];
+  function bookId(q){return q.book || (q.id.startsWith('P1-')?'P1':'legacy');}
+
+
   const DB_NAME='boki1_commute_db';
   const DB_VERSION=1;
   const STORE='kv';
@@ -66,7 +78,7 @@
   function dbGet(key){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
   function dbSet(key,val){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');const req=tx.objectStore(STORE).put(val,key);req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error);});}
   async function loadState(){const saved=await dbGet('state');if(saved) state={...state,...saved};normalizeDaily();}
-  async function saveState(){state.history=state.history.slice(0,200);await dbSet('state',state);}
+  async function saveState(){state.history=state.history.slice(0,200);if(db) await dbSet('state',state);}
 
   function normalizeDaily(){
     if(!state.daily||state.daily.date!==today()) state.daily={date:today(),count:0};
@@ -83,12 +95,17 @@
   function qstat(id){return state.qstats[id]||{attempts:0,correct:0,correctStreak:0,lastResult:null,lastAnswered:null,nextDue:null};}
   function adaptiveScore(q){
     const s=qstat(q.id); let score=0;
+    const related=topicAccuracy(q.topic);
+    if(related.attempts>=2 && related.rate<70) score+=2;
     if(!s.attempts) score+=7;
     const wrongRate=s.attempts ? 1-(s.correct/s.attempts) : .5;
     score+=wrongRate*6;
     if(s.lastResult===false) score+=5;
     if(s.nextDue && s.nextDue<=today()) score+=4;
     score+=Math.max(0,3-s.correctStreak)*0.6;
+    if(q.importance==='A') score+=3;
+    else if(q.importance==='B') score+=1.5;
+    else if(q.importance==='C') score-=0.5;
     score+=Math.random()*1.5;
     return score;
   }
@@ -102,16 +119,29 @@
 
   function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));if(id==='homeView')renderHome();if(id==='statsView')renderStats();window.scrollTo({top:0,behavior:'smooth'});}
 
+  function filteredQuestions(){
+    const b=$('bookSelect').value,topic=$('topicSelect').value,type=$('typeSelect').value;
+    return CPA_QUESTIONS.filter(q=>(b==='all'||bookId(q)===b) && (topic==='all'||q.topic===topic) && (type==='all'||q.type===type));
+  }
+  function refreshSelectTopics(){
+    const b=$('bookSelect').value, selected=$('topicSelect').value;
+    const filtered=CPA_QUESTIONS.filter(q=>b==='all'||bookId(q)===b);
+    const topics=[...new Set(filtered.map(q=>q.topic))].sort((a,b)=>a.localeCompare(b,'ja'));
+    $('topicSelect').replaceChildren(new Option('すべての論点','all'),...topics.map(t=>new Option(`${t}（${filtered.filter(q=>q.topic===t).length}問）`,t)));
+    if(topics.includes(selected))$('topicSelect').value=selected;
+    refreshSelectionCount();
+  }
+  function refreshSelectionCount(){
+    const n=filteredQuestions().length;
+    $('selectionCount').textContent=`条件に合う問題：${n}問`;
+    $('runSelectionBtn').disabled=n===0;
+    $('runSelectionBtn').textContent=n===0?'該当問題がありません':'選択した条件で学習';
+  }
   function buildTopicButtons(){
-    const wrap=$('topicButtons'); wrap.innerHTML='';
-    const topics=[...new Set(QUESTIONS.map(q=>q.topic))];
-    topics.forEach(topic=>{
-      const b=document.createElement('button');b.type='button';b.className='topic-btn';
-      const subject=QUESTIONS.find(q=>q.topic===topic).subject;
-      const n=QUESTIONS.filter(q=>q.topic===topic).length;
-      b.innerHTML=`<b>${topic}</b><small>${subject.includes('商業')?'商会':'工原'} ・ ${n}問</small>`;
-      b.addEventListener('click',()=>startQuiz(topic,QUESTIONS.filter(q=>q.topic===topic),Math.min(10,n),false));wrap.appendChild(b);
-    });
+    const b=$('bookSelect');
+    for(const [id,title] of BOOK_OPTIONS){const count=CPA_QUESTIONS.filter(q=>bookId(q)===id).length;b.appendChild(new Option(`${title}（${count}問）`,id));}
+    b.querySelector('option[value="all"]').textContent=`すべての教材（${CPA_QUESTIONS.length}問）`;
+    refreshSelectTopics();
   }
 
   function renderHome(){
@@ -141,17 +171,19 @@
     $('counter').textContent=`${session.index+1} / ${session.queue.length}`;
     $('subjectBadge').textContent=q.subject.includes('商業')?'商会':'工原';
     $('topicBadge').textContent=q.topic;
+    $('importanceBadge').textContent=q.importance && q.importance!=='未設定' ? '重要度'+q.importance : '重要度未設定';
+    $('importanceBadge').classList.toggle('hidden',!q.source);
     $('typeBadge').textContent=typeLabel(q.type);
     $('questionText').textContent=q.q;
     $('questionNote').textContent=q.note||'';$('questionNote').classList.toggle('hidden',!q.note);
     $('starBtn').textContent=state.favorites.includes(q.id)?'★':'☆';
-    $('feedback').classList.add('hidden');$('feedback').innerHTML='';$('nextBtn').classList.add('hidden');
+    $('feedback').classList.add('hidden');$('feedback').innerHTML='';$('nextBtn').classList.add('hidden');$('sourceRef').textContent='';
     const area=$('answerArea');area.innerHTML='';
     if(q.type==='number'){
       const form=document.createElement('form');form.className='number-form';
       const input=document.createElement('input');input.inputMode='decimal';input.autocomplete='off';input.placeholder='答えを入力';input.setAttribute('aria-label','計算結果');
       const submit=document.createElement('button');submit.type='submit';submit.className='primary';submit.textContent='判定';
-      form.append(input,submit);form.addEventListener('submit',e=>{e.preventDefault();const raw=input.value.trim().replace(/[，,円％%\s]/g,'');const val=Number(raw);if(!Number.isFinite(val)){input.focus();return;}answerNumber(val,input,submit);});area.appendChild(form);setTimeout(()=>input.focus(),50);
+      form.append(input,submit);form.addEventListener('submit',e=>{e.preventDefault();const raw=input.value.trim().replace(/[，,円％%\s]/g,'');const val=Number(raw);if(!raw || !Number.isFinite(val)){input.setCustomValidity('数値を入力してください');input.reportValidity();input.setCustomValidity('');input.focus();return;}answerNumber(val,input,submit);});area.appendChild(form);setTimeout(()=>input.focus(),50);
     }else{
       q.choices.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=`${String.fromCharCode(65+i)}. ${c}`;b.addEventListener('click',()=>answerChoice(i,b));area.appendChild(b);});
     }
@@ -178,6 +210,7 @@
   }
   function showFeedback(q,correct,extra=''){
     const f=$('feedback');f.classList.remove('hidden');f.innerHTML=`<strong class="${correct?'good':'bad'}">${correct?'○ 正解！':'× 不正解'}</strong>${extra?`<div>${extra}</div>`:''}<div>${q.ex}</div><div class="muted" style="margin-top:6px;font-size:12px">次回復習目安：${qstat(q.id).nextDue}</div>`;$('nextBtn').classList.remove('hidden');
+    $('sourceRef').textContent=q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ（PDF閲覧画面のページ番号）' : '本文 p.'+q.page}。教材の論点を参考に独自作問。教材の問題の転載ではありません。` : '旧問題：PDFとの照合は未実施';
   }
 
   function finishQuiz(){
@@ -194,12 +227,39 @@
     const h=$('recentHistory');h.innerHTML=state.history.length?'': '<p class="muted">まだ学習履歴がありません。</p>';state.history.slice(0,12).forEach(x=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`${x.correct?'○':'×'} <b>${x.topic}</b> <span class="muted">${fmtDateTime(x.at)}</span>`;h.appendChild(d);});
   }
 
-  $('dailyBtn').addEventListener('click',()=>startQuiz('今日の10問',QUESTIONS,10,true));
-  $('commuteBtn').addEventListener('click',()=>startQuiz('通勤5分',QUESTIONS,5,true));
+  $('dailyBtn').addEventListener('click',()=>startQuiz('今日の10問／全教材',CPA_QUESTIONS,10,true));
+  $('commuteBtn').addEventListener('click',()=>startQuiz('通勤5分／全教材',CPA_QUESTIONS,5,true));
   $('wrongBtn').addEventListener('click',()=>startQuiz('間違い復習',wrongQuestions(),10,true));
   $('favoriteBtn').addEventListener('click',()=>startQuiz('お気に入り',QUESTIONS.filter(q=>state.favorites.includes(q.id)),10,false));
-  $('weakBtn').addEventListener('click',()=>startQuiz('苦手優先',QUESTIONS,10,true));
-  $('allTopicsBtn').addEventListener('click',()=>startQuiz('全論点ランダム',QUESTIONS,10,false));
+  $('weakBtn').addEventListener('click',()=>startQuiz('苦手優先／全教材',CPA_QUESTIONS,10,true));
+  $('allTopicsBtn').addEventListener('click',()=>startQuiz('全教材／全論点',CPA_QUESTIONS,10,false));
+  $('legacyBtn').addEventListener('click',()=>startQuiz('旧問題（出典未検証）',BASE_QUESTIONS,10,true));
+  $('bookSelect').addEventListener('change',refreshSelectTopics);
+  $('topicSelect').addEventListener('change',refreshSelectionCount);
+  $('typeSelect').addEventListener('change',refreshSelectionCount);
+  $('runSelectionBtn').addEventListener('click',()=>{
+    const pool=filteredQuestions(); if(!pool.length)return;
+    startQuiz('教材・論点別演習',pool,Number($('countSelect').value),true);
+  });
+  $('exportBtn').addEventListener('click',()=>{
+    try{
+      const blob=new Blob([JSON.stringify({app:'boki1-commute',version:3,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='boki1-learning-backup-'+today()+'.json';a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      $('backupMessage').textContent='バックアップファイルを保存しました。';
+    }catch(e){$('backupMessage').textContent='保存に失敗しました。ブラウザのダウンロード設定を確認してください。';}
+  });
+  $('importInput').addEventListener('change',async event=>{
+    const file=event.target.files&&event.target.files[0];if(!file)return;
+    try{
+      const data=JSON.parse(await file.text());
+      if(data.app!=='boki1-commute'||!data.state||!Array.isArray(data.state.history)||!data.state.qstats || !Array.isArray(data.state.favorites))throw Error('invalid');
+      if(!confirm('現在の学習記録をバックアップの内容で置き換えます。よろしいですか？'))return;
+      state={...state,...data.state};normalizeDaily();await saveState();renderHome();
+      $('backupMessage').textContent='学習記録を復元しました。';
+    }catch(e){$('backupMessage').textContent='読込できませんでした。正しいバックアップJSONを選択してください。';}
+    finally{event.target.value='';}
+  });
   $('statsBtn').addEventListener('click',()=>showView('statsView'));
   $('statsBackBtn').addEventListener('click',()=>showView('homeView'));
   $('backBtn').addEventListener('click',()=>showView('homeView'));
