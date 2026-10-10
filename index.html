@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="簿記1級" />
-  <title>簿記1級 通勤TRAINING Ver.5</title>
+  <title>簿記1級 通勤TRAINING Ver.6</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
         <div class="hero-head">
           <div>
             <p class="muted">CPA教科書・講義レジュメ 11ファイル対応</p>
-            <h2>複合計算に挑戦。1級の実戦力へ</h2>
+            <h2>応用問題を中心に。電卓で実戦演習</h2>
           </div>
           <div class="streak">🔥 <span id="streakDays">1</span>日</div>
         </div>
@@ -46,20 +46,20 @@
       </section>
 
       <article class="card">
-        <div class="section-title"><h2>教材対応181問（うち標準・応用46問）</h2></div>
-        <p class="muted" style="margin-top:6px">通常出題は、複数条件のある「標準・応用46問」を優先。基礎135問も難易度を選んで復習できます。全問4択（計算問題を含む）。解答後に計算手順と参照教材の章を表示します。</p>
+        <div class="section-title"><h2>教材対応123問（標準・応用86問／基礎37問）</h2></div>
+        <p class="muted" style="margin-top:6px">通常出題は標準・応用86問から。基礎は37問に厳選しました。すべて4択で、計算問題には問題画面の電卓が使えます。</p>
       </article>
 
       <article class="card">
         <div class="section-title"><h2>教材・論点を選んで演習</h2><button id="allTopicsBtn" class="text-btn" type="button">標準・応用から10問</button></div>
         <div class="study-filters">
-          <label>教材 <select id="bookSelect" aria-label="出題する教材"><option value="all">すべての教材（135問）</option></select></label>
+          <label>教材 <select id="bookSelect" aria-label="出題する教材"><option value="all">すべての教材（123問）</option></select></label>
           <label>論点 <select id="topicSelect" aria-label="出題する論点"><option value="all">すべての論点</option></select></label>
-          <label>難易度 <select id="difficultySelect" aria-label="難易度"><option value="challenge" selected>標準・応用（46問）</option><option value="標準">標準のみ</option><option value="応用">応用のみ</option><option value="基礎">基礎（従来の135問）</option><option value="all">すべて</option></select></label>
+          <label>難易度 <select id="difficultySelect" aria-label="難易度"><option value="challenge" selected>標準・応用（86問）</option><option value="標準">標準のみ</option><option value="応用">応用のみ</option><option value="基礎">基礎（厳選37問）</option><option value="all">すべて</option></select></label>
           <label>問題形式 <select id="typeSelect" aria-label="出題形式"><option value="all">すべて</option><option value="number">計算問題（4択）</option><option value="journal">仕訳問題</option><option value="mcq">一問一答</option></select></label>
           <label>出題数 <select id="countSelect" aria-label="出題数"><option value="5">5問</option><option value="10" selected>10問</option><option value="20">20問</option><option value="30">30問</option></select></label>
         </div>
-        <div id="selectionCount" class="muted selection-count">対象：46問</div>
+        <div id="selectionCount" class="muted selection-count">対象：86問</div>
         <button id="runSelectionBtn" type="button" class="primary wide">選択した条件で学習</button>
         <div id="topicButtons" class="hidden" aria-hidden="true"></div>
       </article>
@@ -73,11 +73,6 @@
         </div>
       </article>
 
-      <article class="card">
-        <h2>旧問題（出典未照合・36問）</h2>
-        <p class="muted">以前の試作問題は今回の教材と照合していません。通常出題には含めず、必要に応じて個別に選べます。</p>
-        <button id="legacyBtn" class="ghost" type="button">旧問題を開く</button>
-      </article>
 
       <article class="card">
         <h2>学習記録のバックアップ</h2>
@@ -109,6 +104,22 @@
         </div>
         <h2 id="questionText" class="question"></h2>
         <p id="questionNote" class="question-note hidden"></p>
+        <div class="calc-toolbar">
+          <button id="calculatorToggle" class="ghost" type="button" aria-expanded="false" aria-controls="calculatorPanel">🧮 電卓を開く</button>
+          <span class="muted calc-hint">問題を見ながら使えます</span>
+        </div>
+        <section id="calculatorPanel" class="calculator-panel hidden" aria-label="学習用電卓">
+          <output id="calcDisplay" class="calc-display" aria-live="polite">0</output>
+          <div class="calc-grid">
+            <button type="button" data-key="C" class="calc-action">C</button><button type="button" data-key="⌫" class="calc-action" aria-label="一文字消す">⌫</button><button type="button" data-key="(" class="calc-action">(</button><button type="button" data-key=")" class="calc-action">)</button>
+            <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button><button type="button" data-key="÷" class="calc-op">÷</button>
+            <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="×" class="calc-op">×</button>
+            <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="−" class="calc-op">−</button>
+            <button type="button" data-key="0">0</button><button type="button" data-key=".">.</button><button type="button" data-key="%">%</button><button type="button" data-key="+" class="calc-op">＋</button>
+            <button type="button" data-key="=" class="calc-equals">＝ 計算する</button>
+          </div>
+          <p class="muted calc-help">例：300×20% → 60 ／ (1200−800)÷4 → 100</p>
+        </section>
         <div id="answerArea"></div>
         <div id="feedback" class="feedback hidden" aria-live="polite"></div>
         <p id="sourceRef" class="muted" style="font-size:12px;line-height:1.65;margin:10px 0"></p>
@@ -151,9 +162,9 @@
     </section>
   </main>
 
-  <script src="questions-cpa-part1.js?v=5"></script>
-  <script src="questions-cpa-all.js?v=5"></script>
-  <script src="questions-advanced.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="questions-foundation.js?v=6"></script>
+  <script src="questions-advanced.js?v=6"></script>
+  <script src="questions-applied-v6.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
