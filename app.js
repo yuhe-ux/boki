@@ -41,8 +41,52 @@
     {id:'I18',subject:'工業簿記・原価計算',topic:'原価差異',type:'journal',q:'製造間接費差異が不利差異10万円で、売上原価へ賦課する場合の基本的な方向は？',choices:['（借）売上原価／（貸）製造間接費差異','（借）製造間接費差異／（貸）売上原価','（借）現金／（貸）売上原価','仕訳なし'],answer:0,ex:'不利差異を売上原価へ賦課する場合、売上原価を増加させる方向で処理します。'}
   ];
 
-  const CPA_QUESTIONS = [...(window.CPA_PART1_QUESTIONS || []), ...(window.CPA_ALL_SOURCE_QUESTIONS || [])];
+  const BASIC_QUESTIONS = [...(window.CPA_PART1_QUESTIONS || []), ...(window.CPA_ALL_SOURCE_QUESTIONS || [])].map(q=>({...q,difficulty:q.difficulty||'基礎'}));
+  const ADVANCED_QUESTIONS = window.CPA_ADVANCED_QUESTIONS || [];
+  const CPA_QUESTIONS = [...ADVANCED_QUESTIONS, ...BASIC_QUESTIONS];
+  const ACTIVE_QUESTIONS = ADVANCED_QUESTIONS;
   const QUESTIONS = [...CPA_QUESTIONS, ...BASE_QUESTIONS];
+
+  // Ver.4: 計算問題の誤答選択肢は論点別に編集した値を用いる。
+  // q.answer（数値・問題ID）は従来どおり保持して学習履歴を引き継ぐ。
+  const CALC_DISTRACTORS = {"P1-005":[1800000,1950000,2050000],"P1-006":[4000000,4500000,6000000],"P1-007":[5000000,5300000,5100000],"P1-008":[6500000,6900000,6800000],"P1-009":[400000,240000,300000],"P1-010":[60000,300000,480000],"P1-011":[120000,110000,300000],"P1-013":[3200000,1000000,4200000],"P1-016":[4800,6000,12000],"P1-017":[20000,240000,200000],"P1-018":[1510,1540,1600],"P1-019":[180000,54000,140000],"P1-020":[0,10000,40000],"P1-021":[9000,5000,3000],"P1-022":[49000,53500,0],"P1-023":[50000,25000,15000],"P1-025":[900000,2000000,1000000],"P1-026":[2000,3000,12000],"P1-029":[140000,240000,300000],"P1-030":[52500,87500,70000],"P1-032":[490000,420000,310000],"P1-033":[90000,350000,115500],"P1-034":[60000,90000,150000],"P1-035":[130000,200000,60000],"P2-001":[2000,310000,300000],"P2-002":[116000,112000,5000],"P2-004":[5000000,4800000,490000],"P2-005":[60000,30000,10000],"P2-007":[8000000,5500000,13500000],"P2-009":[1100000,1210000,1331000],"P2-010":[1050000,100000,25000],"P2-014":[300000,1200000,750000],"P2-016":[1200000,1500000,240000],"P2-017":[2000000,8000000,900000],"P2-018":[200000,400000,320000],"P2-019":[140000,200000,30000],"P3-001":[2000000,1400000,300000],"P3-002":[500000,300000,125000],"P3-005":[1200000,1350000,900000],"P3-007":[5000,700000,750000],"P3-008":[100000,1500000,150000000],"P3-010":[2700000,3500000,3700000],"P3-014":[10500000,12000000,13500000],"P3-017":[50,100,500],"P3-018":[240,30,3000],"G1-002":[500000,520000,510000],"G1-003":[210,215,230],"G1-004":[2200,20000,1000],"G1-005":[750000,400000,150000],"G1-006":[420,480,500],"G1-008":[1200,2400,3000],"G1-009":[320000,150000,500000],"G1-010":[36000,140000,660000],"G1-012":[200000,300000,600000],"G1-013":[180000,200000,220000],"G1-014":[80000,150000,180000],"G1-015":[300,180,240],"G1-016":[800,1000,850],"G1-019":[300000,450000,900000],"G1-020":[150,200,125],"G1-022":[12000,20000,215000],"G1-023":[50000,20000,10500],"G2-001":[800,1250,3000],"G2-002":[2400000,3600000,4800000],"G2-003":[70,20,40],"G2-004":[5000000,6000000,3000000],"G2-006":[5000000,6250000,400000],"G2-007":[1200000,1420000,1100000],"G2-008":[50000,200000,1900000],"G2-009":[300000,1300000,2200000],"G2-011":[180000,50000,820000],"G2-013":[200,800,1000],"G2-014":[420000,0,220000],"G2-017":[7200,6000,4800],"G2-018":[15,20,40],"G2-019":[1800000,3000000,450000],"R17-001":[10000,8000,3000],"R17-003":[1000,800,900],"R18-001":[400,700,500],"R18-002":[16000,10000,4000],"R19-002":[30000,120000,0],"R19-003":[800000,500000,1300000],"R22-002":[200000,40000,160000],"R22-003":[80000,120000,100000],"R24-001":[270000,350000,110000],"R24-003":[200000,600000,700000],"R32-001":[1200,800,3200],"R32-002":[2000,800,3200]};
+  let activeNumericOptions = null;
+
+  function answerUnit(q){
+    if(q.unit)return q.unit;
+    const tail=q.q.slice(-42);
+    const m=tail.match(/[（(](円\/時間|円\/kg|個相当|円|千円|万円|kg|時間|個|％|%)[)）][？?]?\s*$/);
+    if(m)return m[1]==='％'?'%':m[1];
+    if(/[％%][？?]?\s*$/.test(tail)||/安全余裕率|ROI|利益率/.test(tail))return '%';
+    if(/何時間/.test(tail))return '時間';
+    if(/何個|換算量/.test(tail))return '個';
+    return '円';
+  }
+  function formatNumeric(q,value){return `${Number(value).toLocaleString('ja-JP')}${answerUnit(q)}`;}
+  function fallbackDistractors(answer,unit){
+    // 将来増えた計算問題用。答えを保持し、重複値が出ないようにする。
+    const percent=unit==='%';
+    const step=percent?5:(answer>=1000000?100000:answer>=100000?10000:answer>=10000?1000:answer>=1000?100:answer>=100?10:1);
+    const vals=[];
+    for(const mult of [-2,-1,1,2,-3,3,-4,4,5]){
+      const candidate=answer+mult*step;
+      if(candidate<0 || (percent && candidate>100) || candidate===answer || vals.includes(candidate))continue;
+      vals.push(candidate);
+      if(vals.length===3)break;
+    }
+    return vals;
+  }
+  function numericOptionsFor(q){
+    const answer=Number(q.answer);
+    const raw=q.distractors || CALC_DISTRACTORS[q.id]||fallbackDistractors(answer,answerUnit(q));
+    const wrong=[...new Set(raw.map(Number))].filter(v=>Number.isFinite(v)&&v!==answer);
+    if(wrong.length!==3){console.error('計算問題の選択肢を確認してください',q.id);return null;}
+    const values=[answer,...wrong];
+    // Fisher-Yates: 正答が毎回同じ位置にならないようにする
+    for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]];}
+    return {values,correctIndex:values.indexOf(answer)};
+  }
+
   const BOOK_OPTIONS = [
     ['P1','商会 教科書 第Ⅰ部'],['P2','商会 教科書 第Ⅱ部'],['P3','商会 教科書 第Ⅲ部'],
     ['G1','工原 教科書 第Ⅰ部'],['G2','工原 教科書 第Ⅱ部'],
@@ -120,12 +164,13 @@
   function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));if(id==='homeView')renderHome();if(id==='statsView')renderStats();window.scrollTo({top:0,behavior:'smooth'});}
 
   function filteredQuestions(){
-    const b=$('bookSelect').value,topic=$('topicSelect').value,type=$('typeSelect').value;
-    return CPA_QUESTIONS.filter(q=>(b==='all'||bookId(q)===b) && (topic==='all'||q.topic===topic) && (type==='all'||q.type===type));
+    const b=$('bookSelect').value,topic=$('topicSelect').value,type=$('typeSelect').value,level=$('difficultySelect').value;
+    return CPA_QUESTIONS.filter(q=>(b==='all'||bookId(q)===b) && (topic==='all'||q.topic===topic) && (type==='all'||q.type===type) && (level==='all'||(level==='challenge' ? q.difficulty!=='基礎' : q.difficulty===level)));
   }
   function refreshSelectTopics(){
     const b=$('bookSelect').value, selected=$('topicSelect').value;
-    const filtered=CPA_QUESTIONS.filter(q=>b==='all'||bookId(q)===b);
+    const level=$('difficultySelect').value;
+    const filtered=CPA_QUESTIONS.filter(q=>(b==='all'||bookId(q)===b) && (level==='all'||(level==='challenge'?q.difficulty!=='基礎':q.difficulty===level)));
     const topics=[...new Set(filtered.map(q=>q.topic))].sort((a,b)=>a.localeCompare(b,'ja'));
     $('topicSelect').replaceChildren(new Option('すべての論点','all'),...topics.map(t=>new Option(`${t}（${filtered.filter(q=>q.topic===t).length}問）`,t)));
     if(topics.includes(selected))$('topicSelect').value=selected;
@@ -164,7 +209,7 @@
     $('modeLabel').textContent=mode;showView('quizView');renderQuestion();
   }
 
-  function typeLabel(type){return type==='number'?'計算':type==='journal'?'仕訳':'一問一答';}
+  function typeLabel(type){return type==='number'?'計算・4択':type==='journal'?'仕訳':'一問一答';}
   function renderQuestion(){
     const q=session.queue[session.index]; if(!q){finishQuiz();return;}
     session.answeredCurrent=false;
@@ -173,20 +218,20 @@
     $('topicBadge').textContent=q.topic;
     $('importanceBadge').textContent=q.importance && q.importance!=='未設定' ? '重要度'+q.importance : '重要度未設定';
     $('importanceBadge').classList.toggle('hidden',!q.source);
-    $('typeBadge').textContent=typeLabel(q.type);
+    $('typeBadge').textContent=typeLabel(q.type)+(q.difficulty?' · '+q.difficulty:'');
     $('questionText').textContent=q.q;
-    $('questionNote').textContent=q.note||'';$('questionNote').classList.toggle('hidden',!q.note);
+    const note=q.type==='number'?'計算して、正しい数値を4つから選んでください。':(q.note||'');
+    $('questionNote').textContent=note;$('questionNote').classList.toggle('hidden',!note);
     $('starBtn').textContent=state.favorites.includes(q.id)?'★':'☆';
     $('feedback').classList.add('hidden');$('feedback').innerHTML='';$('nextBtn').classList.add('hidden');$('sourceRef').textContent='';
     const area=$('answerArea');area.innerHTML='';
-    if(q.type==='number'){
-      const form=document.createElement('form');form.className='number-form';
-      const input=document.createElement('input');input.inputMode='decimal';input.autocomplete='off';input.placeholder='答えを入力';input.setAttribute('aria-label','計算結果');
-      const submit=document.createElement('button');submit.type='submit';submit.className='primary';submit.textContent='判定';
-      form.append(input,submit);form.addEventListener('submit',e=>{e.preventDefault();const raw=input.value.trim().replace(/[，,円％%\s]/g,'');const val=Number(raw);if(!raw || !Number.isFinite(val)){input.setCustomValidity('数値を入力してください');input.reportValidity();input.setCustomValidity('');input.focus();return;}answerNumber(val,input,submit);});area.appendChild(form);setTimeout(()=>input.focus(),50);
-    }else{
-      q.choices.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=`${String.fromCharCode(65+i)}. ${c}`;b.addEventListener('click',()=>answerChoice(i,b));area.appendChild(b);});
-    }
+    activeNumericOptions=q.type==='number'?numericOptionsFor(q):null;
+    const labels=q.type==='number' ? (activeNumericOptions?.values || []).map(value=>formatNumeric(q,value)) : q.choices;
+    labels.forEach((c,i)=>{
+      const b=document.createElement('button');b.type='button';b.className='choice';
+      b.textContent=`${String.fromCharCode(65+i)}. ${c}`;
+      b.addEventListener('click',()=>answerChoice(i,b));area.appendChild(b);
+    });
   }
 
   async function recordAnswer(q,correct,userAnswer){
@@ -200,17 +245,21 @@
   }
 
   async function answerChoice(i,button){
-    const q=session.queue[session.index]; const correct=i===q.answer;
-    document.querySelectorAll('#answerArea .choice').forEach((b,idx)=>{b.disabled=true;if(idx===q.answer)b.classList.add('correct');});if(!correct)button.classList.add('wrong');
-    await recordAnswer(q,correct,q.choices[i]);showFeedback(q,correct);
-  }
-  async function answerNumber(val,input,submit){
-    const q=session.queue[session.index]; const correct=Math.abs(val-q.answer)<= (q.tolerance||0);input.disabled=true;submit.disabled=true;input.style.borderColor=correct?'#176b46':'#9b2c2c';
-    await recordAnswer(q,correct,val);showFeedback(q,correct,`正解：${q.answer.toLocaleString('ja-JP')}`);
+    if(session.answeredCurrent)return;
+    const q=session.queue[session.index];
+    const correctIndex=q.type==='number'?activeNumericOptions.correctIndex:q.answer;
+    const correct=i===correctIndex;
+    document.querySelectorAll('#answerArea .choice').forEach((b,idx)=>{
+      b.disabled=true;if(idx===correctIndex)b.classList.add('correct');
+    });
+    if(!correct)button.classList.add('wrong');
+    const userAnswer=q.type==='number'?activeNumericOptions.values[i]:q.choices[i];
+    await recordAnswer(q,correct,userAnswer);
+    showFeedback(q,correct,q.type==='number'?`正解：${formatNumeric(q,q.answer)}`:'');
   }
   function showFeedback(q,correct,extra=''){
     const f=$('feedback');f.classList.remove('hidden');f.innerHTML=`<strong class="${correct?'good':'bad'}">${correct?'○ 正解！':'× 不正解'}</strong>${extra?`<div>${extra}</div>`:''}<div>${q.ex}</div><div class="muted" style="margin-top:6px;font-size:12px">次回復習目安：${qstat(q.id).nextDue}</div>`;$('nextBtn').classList.remove('hidden');
-    $('sourceRef').textContent=q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ（PDF閲覧画面のページ番号）' : '本文 p.'+q.page}。教材の論点を参考に独自作問。教材の問題の転載ではありません。` : '旧問題：PDFとの照合は未実施';
+    $('sourceRef').textContent=q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ' : (q.page ? '本文 p.'+q.page : '章・論点を参照（ページ番号未指定）')}。教材の論点を参考に独自作問。` : '旧問題：PDFとの照合は未実施';
   }
 
   function finishQuiz(){
@@ -227,14 +276,15 @@
     const h=$('recentHistory');h.innerHTML=state.history.length?'': '<p class="muted">まだ学習履歴がありません。</p>';state.history.slice(0,12).forEach(x=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`${x.correct?'○':'×'} <b>${x.topic}</b> <span class="muted">${fmtDateTime(x.at)}</span>`;h.appendChild(d);});
   }
 
-  $('dailyBtn').addEventListener('click',()=>startQuiz('今日の10問／全教材',CPA_QUESTIONS,10,true));
-  $('commuteBtn').addEventListener('click',()=>startQuiz('通勤5分／全教材',CPA_QUESTIONS,5,true));
+  $('dailyBtn').addEventListener('click',()=>startQuiz('今日の10問／標準・応用',ACTIVE_QUESTIONS,10,true));
+  $('commuteBtn').addEventListener('click',()=>startQuiz('通勤5分／標準・応用',ACTIVE_QUESTIONS,3,true));
   $('wrongBtn').addEventListener('click',()=>startQuiz('間違い復習',wrongQuestions(),10,true));
   $('favoriteBtn').addEventListener('click',()=>startQuiz('お気に入り',QUESTIONS.filter(q=>state.favorites.includes(q.id)),10,false));
-  $('weakBtn').addEventListener('click',()=>startQuiz('苦手優先／全教材',CPA_QUESTIONS,10,true));
-  $('allTopicsBtn').addEventListener('click',()=>startQuiz('全教材／全論点',CPA_QUESTIONS,10,false));
+  $('weakBtn').addEventListener('click',()=>startQuiz('苦手優先／標準・応用',ACTIVE_QUESTIONS,10,true));
+  $('allTopicsBtn').addEventListener('click',()=>startQuiz('標準・応用／全教材',ACTIVE_QUESTIONS,10,false));
   $('legacyBtn').addEventListener('click',()=>startQuiz('旧問題（出典未検証）',BASE_QUESTIONS,10,true));
   $('bookSelect').addEventListener('change',refreshSelectTopics);
+  $('difficultySelect').addEventListener('change',refreshSelectTopics);
   $('topicSelect').addEventListener('change',refreshSelectionCount);
   $('typeSelect').addEventListener('change',refreshSelectionCount);
   $('runSelectionBtn').addEventListener('click',()=>{
