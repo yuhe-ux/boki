@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="簿記1級" />
-  <title>簿記1級 通勤TRAINING Ver.6</title>
+  <title>簿記1級 通勤TRAINING Ver.8</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <header class="topbar">
@@ -36,6 +36,22 @@
         </div>
         <div class="progress"><div id="todayBar"></div></div>
         <button id="dailyBtn" class="primary wide" type="button">▶ 今日の10問</button>
+      </article>
+
+
+      <article class="card exam-card" aria-label="本試験までのカウントダウンと学習アドバイス">
+        <div class="exam-heading"><span class="exam-label">🎯 第174回・日商簿記1級</span><span class="exam-date" id="examDateLabel">2026年11月15日（日）</span></div>
+        <div class="countdown-line"><span>本試験まで</span><strong id="examDays">あと -- 日</strong></div>
+        <details class="compact-settings" id="examDateSettings">
+          <summary>試験日を変更する</summary>
+          <div class="date-settings"><label for="examDateInput">受験予定日</label><input id="examDateInput" type="date" min="2026-01-01" max="2099-12-31" value="2026-11-15" /><span id="examDateMessage" class="muted" role="status"></span></div>
+        </details>
+        <div class="coach-box">
+          <h3>📋 今日の学習アドバイス</h3>
+          <p id="coachAdvice">学習状況に合わせて、おすすめの学習内容を表示します。</p>
+          <div id="coachDetail" class="muted coach-detail">まずは今日の10問から始めましょう。</div>
+          <button id="coachStartBtn" type="button" class="coach-action">おすすめの問題を解く →</button>
+        </div>
       </article>
 
       <section class="quick-grid" aria-label="学習メニュー">
@@ -74,6 +90,22 @@
       </article>
 
 
+
+      <article class="card features-card">
+        <div class="section-title"><h2>学習サポート機能</h2><span class="muted small-tag">5機能</span></div>
+        <p class="muted">計算履歴とメモリー、理解度チェック、ヒント、学習範囲設定、ミス原因分析を使えます。</p>
+        <details id="scopeDetails" class="scope-details">
+          <summary>📚 学習済みの教材を設定</summary>
+          <p class="muted">チェックを外した教材は「今日の10問」「通勤5分」「苦手優先」「条件で学習」の出題から除外します。間違い復習・お気に入りには引き続き表示されます。</p>
+          <div id="scopeChecklist" class="scope-list"></div>
+          <div id="scopeMessage" class="muted small-tag" role="status"></div>
+        </details>
+        <details class="scope-details">
+          <summary>🔍 ミスの原因を確認</summary>
+          <div id="mistakeSummary" class="mistake-summary muted">記録を集計中です。</div>
+        </details>
+      </article>
+
       <article class="card">
         <h2>学習記録のバックアップ</h2>
         <p class="muted">履歴は端末のブラウザ内に保存されます。別端末に移す前やブラウザデータを消す前に、JSON形式でバックアップしてください。</p>
@@ -104,12 +136,18 @@
         </div>
         <h2 id="questionText" class="question"></h2>
         <p id="questionNote" class="question-note hidden"></p>
+        <div class="hint-toolbar"><button id="hintBtn" class="ghost" type="button">💡 ヒントを見る（1/2）</button><span class="muted">解く前に考え方を確認</span></div>
+        <p id="hintText" class="hint-text hidden" aria-live="polite"></p>
         <div class="calc-toolbar">
           <button id="calculatorToggle" class="ghost" type="button" aria-expanded="false" aria-controls="calculatorPanel">🧮 電卓を開く</button>
           <span class="muted calc-hint">問題を見ながら使えます</span>
         </div>
         <section id="calculatorPanel" class="calculator-panel hidden" aria-label="学習用電卓">
           <output id="calcDisplay" class="calc-display" aria-live="polite">0</output>
+          <div class="calc-memorybar" aria-label="電卓メモリー">
+            <span id="calcMemoryStatus" class="calc-memory-label">M: 0</span>
+            <button type="button" data-memory="M+">M+</button><button type="button" data-memory="M-">M−</button><button type="button" data-memory="MR">MR</button><button type="button" data-memory="MC">MC</button>
+          </div>
           <div class="calc-grid">
             <button type="button" data-key="C" class="calc-action">C</button><button type="button" data-key="⌫" class="calc-action" aria-label="一文字消す">⌫</button><button type="button" data-key="(" class="calc-action">(</button><button type="button" data-key=")" class="calc-action">)</button>
             <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button><button type="button" data-key="÷" class="calc-op">÷</button>
@@ -118,10 +156,17 @@
             <button type="button" data-key="0">0</button><button type="button" data-key=".">.</button><button type="button" data-key="%">%</button><button type="button" data-key="+" class="calc-op">＋</button>
             <button type="button" data-key="=" class="calc-equals">＝ 計算する</button>
           </div>
-          <p class="muted calc-help">例：300×20% → 60 ／ (1200−800)÷4 → 100</p>
+          <details class="calc-history-details"><summary>🕘 計算履歴を開く</summary><div id="calcHistoryList" class="calc-history-list"><p class="muted">まだ計算履歴はありません。</p></div></details>
+          <p class="muted calc-help">例：1,200×3,000 → 3,600,000 ／ (1,200−800)÷4 → 100</p>
         </section>
         <div id="answerArea"></div>
         <div id="feedback" class="feedback hidden" aria-live="polite"></div>
+        <div id="reflectionPanel" class="reflection-panel hidden" aria-live="polite">
+          <strong id="reflectionTitle">理解度を記録</strong>
+          <p id="reflectionDescription" class="muted"></p>
+          <div id="reflectionActions" class="reflection-actions"></div>
+          <p id="reflectionResult" class="muted" role="status"></p>
+        </div>
         <p id="sourceRef" class="muted" style="font-size:12px;line-height:1.65;margin:10px 0"></p>
         <button id="nextBtn" class="primary wide hidden" type="button">次の問題 →</button>
       </article>
@@ -162,9 +207,9 @@
     </section>
   </main>
 
-  <script src="questions-foundation.js?v=6"></script>
-  <script src="questions-advanced.js?v=6"></script>
-  <script src="questions-applied-v6.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="questions-foundation.js?v=8"></script>
+  <script src="questions-advanced.js?v=8"></script>
+  <script src="questions-applied-v6.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

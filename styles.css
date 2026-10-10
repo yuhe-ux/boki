@@ -24,3 +24,44 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .calc-grid .calc-equals{grid-column:span 4;background:#17324d;color:white;border-color:#17324d;font-size:16px;min-height:47px}
 .calc-help{margin:8px 0 0;font-size:12px;line-height:1.6}
 @media(max-width:380px){.calc-grid{gap:5px}.calculator-panel{padding:9px}.calc-display{font-size:20px}}
+
+/* Ver.8：試験までの学習ナビ・理解度・電卓メモリー */
+.exam-card{background:#fdfefe;border-color:#bed0dd}
+.exam-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px}
+.exam-label{font-weight:800;color:#284c68}.exam-date{color:var(--muted)}
+.countdown-line{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:9px 0 15px;flex-wrap:wrap}
+.countdown-line>span{font-size:14px;color:#4b657a}.countdown-line strong{font-size:clamp(24px,6vw,34px);color:#17324d;font-variant-numeric:tabular-nums}
+.coach-box{background:#eef4f7;border-radius:14px;padding:15px}
+.coach-box h3{margin:0 0 8px;font-size:16px}.coach-box p{font-size:15px;line-height:1.65;margin:0 0 8px;font-weight:650}
+.coach-detail{font-size:13px;line-height:1.5;margin-bottom:10px}
+.coach-action{background:#17324d;color:#fff;border:0;border-radius:11px;padding:11px 14px;min-height:44px;width:100%;font-size:14px;font-weight:750}
+.compact-settings summary,.scope-details summary{font-size:13px;font-weight:700;cursor:pointer;min-height:38px;display:flex;align-items:center;gap:8px;color:#36546b}
+.compact-settings{border-top:1px solid #dde7ec;margin-top:5px;margin-bottom:13px}
+.date-settings{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:4px 0 8px;font-size:13px}
+.date-settings input{font-size:16px;min-height:43px;padding:6px 9px;border:1px solid #b7c9d6;border-radius:10px;max-width:100%;background:#fff}
+.features-card>.muted{font-size:13px;line-height:1.65}.small-tag{font-size:12px}
+.scope-details{border-top:1px solid #e1e7ec;padding:7px 0}
+.scope-details>p{font-size:12px;line-height:1.6;margin:5px 0 12px}
+.scope-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.scope-item{display:flex;align-items:center;gap:8px;font-size:13px;padding:9px;background:#f2f6f8;border-radius:10px;min-width:0}
+.scope-item input{width:20px;height:20px;flex:0 0 20px;accent-color:#17324d}
+.scope-item span{min-width:0;overflow-wrap:anywhere}
+.mistake-summary{display:grid;gap:7px;padding:7px 0;font-size:13px}
+.mistake-summary>div{display:flex;justify-content:space-between;gap:10px}
+.hint-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:8px 0}
+.hint-toolbar .muted{font-size:12px}.hint-text{padding:12px;background:#fffaeb;border:1px solid #eedb9f;border-radius:12px;font-size:13px;line-height:1.7;margin:8px 0}
+.calc-memorybar{display:grid;grid-template-columns:minmax(62px,1fr) repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px;align-items:stretch}
+.calc-memory-label{background:#e1ecf3;font-variant-numeric:tabular-nums;display:flex;align-items:center;padding:5px;border-radius:9px;font-size:11px;min-width:0;overflow-wrap:anywhere}
+.calc-memorybar button{border:1px solid #a8bccd;background:#eaf1f5;font-size:13px;font-weight:700;min-height:40px;min-width:0;border-radius:9px;padding:3px}
+.calc-history-details{border-top:1px solid #d4e0e8;margin-top:10px;padding-top:8px}
+.calc-history-details summary{font-weight:700;color:#315570;cursor:pointer;min-height:36px;font-size:13px}
+.calc-history-list{display:grid;gap:6px;margin:5px 0 10px;max-height:210px;overflow-y:auto}
+.calc-history-list button{display:flex;justify-content:space-between;gap:9px;text-align:left;padding:9px;background:white;color:#19344c;border:1px solid #d0dce5;border-radius:9px;min-width:0;font-size:13px}
+.calc-history-list span{overflow-wrap:anywhere}.calc-history-list strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+.reflection-panel{background:#f0f6f9;border:1px solid #b5cbd8;border-radius:14px;padding:13px;margin-top:12px}
+.reflection-panel>strong{display:block;margin-bottom:4px}.reflection-panel p{font-size:13px;line-height:1.5;margin:5px 0}
+.reflection-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+.reflection-actions button{min-height:44px;padding:8px 6px;background:#fff;border:1px solid #91b0c4;border-radius:11px;color:#17324d;font-size:13px;font-weight:700}
+.reflection-actions button.selected{background:#d4e6f1;border:2px solid #17324d}
+@media(max-width:460px){.scope-list{grid-template-columns:1fr}.countdown-line strong{font-size:26px}.calc-memorybar button{font-size:12px}}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #3795c4;outline-offset:2px}
