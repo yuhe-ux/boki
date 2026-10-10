@@ -1,0 +1,15 @@
+{
+  "name": "簿記1級 通勤TRAINING",
+  "short_name": "簿記1級",
+  "description": "通勤時間に日商簿記1級を学習するためのオフライン対応PWA",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#17324d",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
