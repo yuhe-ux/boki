@@ -65,3 +65,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .reflection-actions button.selected{background:#d4e6f1;border:2px solid #17324d}
 @media(max-width:460px){.scope-list{grid-template-columns:1fr}.countdown-line strong{font-size:26px}.calc-memorybar button{font-size:12px}}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #3795c4;outline-offset:2px}
+
+/* Ver.9：解法マスターのシリーズ別学習メニュー */
+.km-series-card { border-color: #b9c8da; }
+.km-series-card .section-title { align-items: center; gap: 8px; }
+.km-count { display:inline-flex; align-items:center; border-radius:999px; padding:5px 9px; font-size:12px; font-weight:750; background:#e7f0fb; color:#17324d; white-space:nowrap; }
+.km-grid { margin-top:12px; }
+.km-grid .menu-card { min-width:0; }
+.km-grid .menu-card b { overflow-wrap:anywhere; }
+@media (max-width:340px) { .km-series-card .section-title { flex-wrap:wrap; } }

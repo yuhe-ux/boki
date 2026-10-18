@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="簿記1級" />
-  <title>簿記1級 通勤TRAINING Ver.8</title>
+  <title>簿記1級 通勤TRAINING Ver.9</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
   <header class="topbar">
@@ -26,8 +26,8 @@
       <article class="hero card">
         <div class="hero-head">
           <div>
-            <p class="muted">CPA教科書・講義レジュメ 11ファイル対応</p>
-            <h2>応用問題を中心に。電卓で実戦演習</h2>
+            <p class="muted">CPA教材＋解法マスター（商会・工原）</p>
+            <h2>解法マスター追加。本試験形式の考える計算を。</h2>
           </div>
           <div class="streak">🔥 <span id="streakDays">1</span>日</div>
         </div>
@@ -61,17 +61,26 @@
         <button id="weakBtn" class="menu-card" type="button"><span>🎯</span><b>苦手優先</b><small>正答率を分析</small></button>
       </section>
 
+      <article class="card km-series-card" aria-label="解法マスター シリーズ">
+        <div class="section-title"><h2>📚 解法マスター シリーズ</h2><span class="km-count" id="kmCount">全167問</span></div>
+        <p class="muted">共有された第19期の商会・工原「問題ALL.pdf」の出題論点を参考にしたオリジナル4択。資料を読み取り、数段階の計算を行います。</p>
+        <div class="quick-grid km-grid">
+          <button id="kmSBtn" class="menu-card" type="button"><span>📘</span><b>解法マスター 商会</b><small id="kmSCount">87問</small></button>
+          <button id="kmGBtn" class="menu-card" type="button"><span>⚙️</span><b>解法マスター 工原</b><small id="kmGCount">80問</small></button>
+        </div>
+        <button id="kmAllBtn" class="primary wide" type="button" style="margin-top:12px">▶ 解法マスター 総合10問</button>
+      </article>
       <article class="card">
-        <div class="section-title"><h2>教材対応123問（標準・応用86問／基礎37問）</h2></div>
-        <p class="muted" style="margin-top:6px">通常出題は標準・応用86問から。基礎は37問に厳選しました。すべて4択で、計算問題には問題画面の電卓が使えます。</p>
+        <div class="section-title"><h2 id="libraryStatsTitle">教材対応290問（標準・応用253問／基礎37問）</h2></div>
+        <p class="muted" id="libraryStatsDesc" style="margin-top:6px">CPA教材123問＋解法マスター167問。すべて4択で、電卓も使えます。</p>
       </article>
 
       <article class="card">
         <div class="section-title"><h2>教材・論点を選んで演習</h2><button id="allTopicsBtn" class="text-btn" type="button">標準・応用から10問</button></div>
         <div class="study-filters">
-          <label>教材 <select id="bookSelect" aria-label="出題する教材"><option value="all">すべての教材（123問）</option></select></label>
+          <label>教材 <select id="bookSelect" aria-label="出題する教材"><option value="all">すべての教材</option></select></label>
           <label>論点 <select id="topicSelect" aria-label="出題する論点"><option value="all">すべての論点</option></select></label>
-          <label>難易度 <select id="difficultySelect" aria-label="難易度"><option value="challenge" selected>標準・応用（86問）</option><option value="標準">標準のみ</option><option value="応用">応用のみ</option><option value="基礎">基礎（厳選37問）</option><option value="all">すべて</option></select></label>
+          <label>難易度 <select id="difficultySelect" aria-label="難易度"><option value="challenge" selected>標準・応用</option><option value="標準">標準のみ</option><option value="応用">応用のみ</option><option value="基礎">基礎（37問）</option><option value="all">すべて</option></select></label>
           <label>問題形式 <select id="typeSelect" aria-label="出題形式"><option value="all">すべて</option><option value="number">計算問題（4択）</option><option value="journal">仕訳問題</option><option value="mcq">一問一答</option></select></label>
           <label>出題数 <select id="countSelect" aria-label="出題数"><option value="5">5問</option><option value="10" selected>10問</option><option value="20">20問</option><option value="30">30問</option></select></label>
         </div>
@@ -207,9 +216,10 @@
     </section>
   </main>
 
-  <script src="questions-foundation.js?v=8"></script>
-  <script src="questions-advanced.js?v=8"></script>
-  <script src="questions-applied-v6.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="questions-foundation.js?v=10"></script>
+  <script src="questions-advanced.js?v=10"></script>
+  <script src="questions-applied-v6.js?v=10"></script>
+  <script src="questions-kaihou-master.js?v=10"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>

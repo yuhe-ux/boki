@@ -5,8 +5,9 @@
   const BASIC_QUESTIONS = (window.CPA_FOUNDATION_QUESTIONS || []).map(q=>({...q,difficulty:'基礎'}));
   const ADVANCED_QUESTIONS = [...(window.CPA_ADVANCED_QUESTIONS || []), ...(window.CPA_V6_QUESTIONS || [])];
   const CPA_QUESTIONS = [...ADVANCED_QUESTIONS, ...BASIC_QUESTIONS];
-  const ACTIVE_QUESTIONS = ADVANCED_QUESTIONS;
-  const QUESTIONS = CPA_QUESTIONS;
+  const KAIHOU_QUESTIONS = window.KAIHOU_MASTER_QUESTIONS || [];
+  const ACTIVE_QUESTIONS = [...ADVANCED_QUESTIONS, ...KAIHOU_QUESTIONS];
+  const QUESTIONS = [...CPA_QUESTIONS, ...KAIHOU_QUESTIONS];
   const LIVE_IDS = new Set(QUESTIONS.map(q=>q.id));
 
   // Ver.4: 計算問題の誤答選択肢は論点別に編集した値を用いる。
@@ -54,7 +55,8 @@
     ['G1','工原 教科書 第Ⅰ部'],['G2','工原 教科書 第Ⅱ部'],
     ['R17','レジュメ #17 標準原価計算②'],['R18','レジュメ #18 標準原価計算③'],
     ['R19','レジュメ #19 直接原価計算'],['R22','レジュメ #22 予算管理②'],
-    ['R24','レジュメ #24 意思決定会計'],['R32','レジュメ #32 内部振替価格']
+    ['R24','レジュメ #24 意思決定会計'],['R32','レジュメ #32 内部振替価格'],
+    ['KM-S','解法マスター｜商会 第19期'],['KM-G','解法マスター｜工原 第19期']
   ];
   function bookId(q){return q.book || (q.id.startsWith('P1-')?'P1':'legacy');}
 
@@ -103,6 +105,9 @@
     if(typeof s.examDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s.examDate))s.examDate='2026-11-15';
     if(!Array.isArray(s.allowedBooks))s.allowedBooks=BOOK_OPTIONS.map(b=>b[0]);
     s.allowedBooks=[...new Set(s.allowedBooks.filter(id=>BOOK_OPTIONS.some(b=>b[0]===id)))];
+    // 既存のユーザーがVer.9へ更新したときは、新シリーズのみ一度自動で学習対象へ追加。
+    // それまでに解除した教材の設定は変更しない。
+    if(!s.kaihouMasterAdded){for(const id of ['KM-S','KM-G'])if(!s.allowedBooks.includes(id))s.allowedBooks.push(id);s.kaihouMasterAdded=true;}
     if(!Number.isFinite(s.calcMemory))s.calcMemory=0;
     if(!Array.isArray(s.calcHistory))s.calcHistory=[];
     s.calcHistory=s.calcHistory.filter(x=>x&&typeof x.expr==='string'&&Number.isFinite(x.value)).slice(0,20);
@@ -164,12 +169,12 @@
 
   function filteredQuestions(){
     const b=$('bookSelect').value,topic=$('topicSelect').value,type=$('typeSelect').value,level=$('difficultySelect').value;
-    return CPA_QUESTIONS.filter(q=>allowed(q)&&(b==='all'||bookId(q)===b) && (topic==='all'||q.topic===topic) && (type==='all'||q.type===type) && (level==='all'||(level==='challenge' ? q.difficulty!=='基礎' : q.difficulty===level)));
+    return QUESTIONS.filter(q=>allowed(q)&&(b==='all'||bookId(q)===b) && (topic==='all'||q.topic===topic) && (type==='all'||q.type===type) && (level==='all'||(level==='challenge' ? q.difficulty!=='基礎' : q.difficulty===level)));
   }
   function refreshSelectTopics(){
     const b=$('bookSelect').value, selected=$('topicSelect').value;
     const level=$('difficultySelect').value;
-    const filtered=CPA_QUESTIONS.filter(q=>allowed(q)&&(b==='all'||bookId(q)===b) && (level==='all'||(level==='challenge'?q.difficulty!=='基礎':q.difficulty===level)));
+    const filtered=QUESTIONS.filter(q=>allowed(q)&&(b==='all'||bookId(q)===b) && (level==='all'||(level==='challenge'?q.difficulty!=='基礎':q.difficulty===level)));
     const topics=[...new Set(filtered.map(q=>q.topic))].sort((a,b)=>a.localeCompare(b,'ja'));
     $('topicSelect').replaceChildren(new Option('すべての論点','all'),...topics.map(t=>new Option(`${t}（${filtered.filter(q=>q.topic===t).length}問）`,t)));
     if(topics.includes(selected))$('topicSelect').value=selected;
@@ -183,8 +188,8 @@
   }
   function buildTopicButtons(){
     const b=$('bookSelect');
-    for(const [id,title] of BOOK_OPTIONS){const count=CPA_QUESTIONS.filter(q=>bookId(q)===id).length;b.appendChild(new Option(`${title}（${count}問）`,id));}
-    b.querySelector('option[value="all"]').textContent=`すべての教材（${CPA_QUESTIONS.length}問）`;
+    for(const [id,title] of BOOK_OPTIONS){const count=QUESTIONS.filter(q=>bookId(q)===id).length;b.appendChild(new Option(`${title}（${count}問）`,id));}
+    b.querySelector('option[value="all"]').textContent=`すべての教材（${QUESTIONS.length}問）`;
     refreshSelectTopics();
   }
 
@@ -199,6 +204,11 @@
     $('statAnswered').textContent=attempts;
     $('statRate').textContent=attempts?`${Math.round(correct/attempts*100)}%`:'--';
     $('statWeak').textContent=wrongQuestions().length;
+    $('libraryStatsTitle').textContent=`教材対応${QUESTIONS.length}問（標準・応用${ACTIVE_QUESTIONS.length}問／基礎${BASIC_QUESTIONS.length}問）`;
+    $('libraryStatsDesc').textContent=`CPA教材${CPA_QUESTIONS.length}問＋解法マスター${KAIHOU_QUESTIONS.length}問。標準・応用を中心に出題。すべて4択で電卓も使用できます。`;
+    $('kmCount').textContent=`全${KAIHOU_QUESTIONS.length}問`;
+    $('kmSCount').textContent=`${KAIHOU_QUESTIONS.filter(q=>q.book==='KM-S').length}問`;
+    $('kmGCount').textContent=`${KAIHOU_QUESTIONS.filter(q=>q.book==='KM-G').length}問`;
     $('dailyBtn').textContent=state.daily.count>=10?'✓ 今日の10問 完了（追加学習）':'▶ 今日の10問';
     renderExamCoach();
     renderMistakeSummary();
@@ -298,7 +308,7 @@
     $('subjectBadge').textContent=q.subject.includes('商業')?'商会':'工原';
     $('topicBadge').textContent=q.topic;
     $('importanceBadge').textContent=q.importance && q.importance!=='未設定' ? '重要度'+q.importance : '重要度未設定';
-    $('importanceBadge').classList.toggle('hidden',!q.source);
+    $('importanceBadge').classList.toggle('hidden',!q.source || Boolean(q.series));
     $('typeBadge').textContent=typeLabel(q.type)+(q.difficulty?' · '+q.difficulty:'');
     $('questionText').textContent=q.q;
     calcReset();
@@ -344,7 +354,7 @@
   }
   function showFeedback(q,correct,extra=''){
     const f=$('feedback');f.classList.remove('hidden');f.innerHTML=`<strong class="${correct?'good':'bad'}">${correct?'○ 正解！':'× 不正解'}</strong>${extra?`<div>${extra}</div>`:''}<div>${q.ex}</div><div class="muted" style="margin-top:6px;font-size:12px">次回復習目安：${qstat(q.id).nextDue}</div>`;$('nextBtn').classList.remove('hidden');
-    $('sourceRef').textContent=q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ' : (q.page ? '本文 p.'+q.page : '章・論点を参照（ページ番号未指定）')}。教材の論点を参考に独自作問。` : '参照教材を確認してください。';
+    $('sourceRef').textContent=q.series==='解法マスター' ? `参照論点：${q.source}／第${q.chapter}回／PDF ${q.pdfPage}ページ。原問題とは別の独自作問です（本PDFは問題編）。` : (q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ' : (q.page ? '本文 p.'+q.page : '章・論点を参照（ページ番号未指定）')}。教材の論点を参考に独自作問。` : '参照教材を確認してください。');
   }
 
 
@@ -420,6 +430,9 @@
     const h=$('recentHistory');h.innerHTML=state.history.length?'': '<p class="muted">まだ学習履歴がありません。</p>';state.history.slice(0,12).forEach(x=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`${x.correct?'○':'×'} <b>${x.topic}</b> <span class="muted">${fmtDateTime(x.at)}</span>`;h.appendChild(d);});
   }
 
+  $('kmAllBtn').addEventListener('click',()=>startQuiz('解法マスター｜総合',KAIHOU_QUESTIONS.filter(allowed),10,true));
+  $('kmSBtn').addEventListener('click',()=>startQuiz('解法マスター｜商会',KAIHOU_QUESTIONS.filter(q=>q.book==='KM-S'&&allowed(q)),10,true));
+  $('kmGBtn').addEventListener('click',()=>startQuiz('解法マスター｜工原',KAIHOU_QUESTIONS.filter(q=>q.book==='KM-G'&&allowed(q)),10,true));
   $('dailyBtn').addEventListener('click',()=>startQuiz('今日の10問／標準・応用',allowedChallenges(),10,true));
   $('commuteBtn').addEventListener('click',()=>startQuiz('通勤5分／標準・応用',allowedChallenges(),3,true));
   $('wrongBtn').addEventListener('click',()=>startQuiz('間違い復習',wrongQuestions(),10,true));
@@ -445,7 +458,7 @@
   });
   $('exportBtn').addEventListener('click',()=>{
     try{
-      const blob=new Blob([JSON.stringify({app:'boki1-commute',version:8,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});
+      const blob=new Blob([JSON.stringify({app:'boki1-commute',version:9,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='boki1-learning-backup-'+today()+'.json';a.click();
       setTimeout(()=>URL.revokeObjectURL(url),1500);
       $('backupMessage').textContent='バックアップファイルを保存しました。';
