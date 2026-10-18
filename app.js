@@ -9,6 +9,10 @@
   const ACTIVE_QUESTIONS = [...ADVANCED_QUESTIONS, ...KAIHOU_QUESTIONS];
   const QUESTIONS = [...CPA_QUESTIONS, ...KAIHOU_QUESTIONS];
   const LIVE_IDS = new Set(QUESTIONS.map(q=>q.id));
+  // 表示専用辞書：出題・成績・復習の内部キーは変更しない。
+  const KAIHOU_TOPIC_LABELS = {"inv":"棚卸減耗損・商品評価損","retail":"売価還元法","sample":"試用品販売","return":"返品権付き販売","points":"収益認識・ポイント付与","inspect":"収益認識・検収基準","allow":"貸倒引当金・破産更生債権","cf":"貸倒懸念債権・CF見積法","cf_tax":"貸倒引当金・税効果会計","bond_st":"社債・償却原価法（定額法）","bond_red":"社債・買入償還","bond":"社債・償却原価法（利息法）","receiv":"受取手形・債権譲渡","lease":"ファイナンス・リース","aro":"資産除去債務","software":"市場販売目的ソフトウェア","dep":"減価償却・見積変更","compression":"固定資産の圧縮記帳","impair":"固定資産の減損","securities":"その他有価証券・税効果","fxbond":"外貨建債券","forward":"為替予約","repo":"買戻条件付き有価証券取引","distribution":"剰余金の配当・利益準備金","fx":"為替差損益","branch":"在外支店の財務諸表換算","foreign":"在外子会社の財務諸表換算","retire":"退職給付費用","actuarial":"数理計算上の差異","option":"ストック・オプション","convertible":"新株予約権付社債","stock":"自己株式の処分","goodwill":"企業結合・のれん","swap":"株式交換・企業結合","upstream":"連結会計・未実現利益（アップストリーム）","step":"企業結合・段階取得","additional":"子会社株式の追加取得","equity":"持分法","consolidatedchanges":"連結株主資本等変動計算書","material":"材料費会計","overhead":"製造間接費差異","labor":"労務費会計","department":"部門別計算・相互配賦","process":"総合原価計算・平均法","fifo":"総合原価計算・先入先出法","joint":"連産品原価計算","standard":"標準原価計算・直接材料費差異","mix":"標準原価計算・材料配合差異","yield":"標準原価計算・歩留差異","budget":"予算編成","cash":"現金予算","direct":"直接原価計算","cvp":"CVP分析・損益分岐点","multi":"複数製品CVP分析","budgetvar":"予算実績差異分析","ri":"残余利益","transfer":"内部振替価格","capacity":"制約条件付き最適生産計画","discontinue":"部門廃止の意思決定","special":"特別注文の意思決定","makebuy":"自製か購入かの意思決定","addproc":"追加加工の意思決定","npv":"設備投資・正味現在価値法","aftertax":"税引後キャッシュフロー","abc":"活動基準原価計算（ABC）","quality":"品質原価計算","target":"原価企画・目標原価","lcc":"ライフサイクルコスティング"};
+  function topicLabel(topic){return KAIHOU_TOPIC_LABELS[topic] || topic;}
+
 
   // Ver.4: 計算問題の誤答選択肢は論点別に編集した値を用いる。
   // q.answer（数値・問題ID）は従来どおり保持して学習履歴を引き継ぐ。
@@ -175,8 +179,8 @@
     const b=$('bookSelect').value, selected=$('topicSelect').value;
     const level=$('difficultySelect').value;
     const filtered=QUESTIONS.filter(q=>allowed(q)&&(b==='all'||bookId(q)===b) && (level==='all'||(level==='challenge'?q.difficulty!=='基礎':q.difficulty===level)));
-    const topics=[...new Set(filtered.map(q=>q.topic))].sort((a,b)=>a.localeCompare(b,'ja'));
-    $('topicSelect').replaceChildren(new Option('すべての論点','all'),...topics.map(t=>new Option(`${t}（${filtered.filter(q=>q.topic===t).length}問）`,t)));
+    const topics=[...new Set(filtered.map(q=>q.topic))].sort((a,b)=>topicLabel(a).localeCompare(topicLabel(b),'ja'));
+    $('topicSelect').replaceChildren(new Option('すべての論点','all'),...topics.map(t=>new Option(`${topicLabel(t)}（${filtered.filter(q=>q.topic===t).length}問）`,t)));
     if(topics.includes(selected))$('topicSelect').value=selected;
     refreshSelectionCount();
   }
@@ -235,9 +239,9 @@
       detail='引き続き、苦手論点の復習や次の試験に向けた学習ができます。';mode='苦手優先';pool=allowedChallenges();
     }else if(weak.length && (left<=30||wrongQuestions().length>=3)){
       const t=weak[0];
-      advice=`「${t.topic}」の復習を最優先にしましょう。`;
+      advice=`「${topicLabel(t.topic)}」の復習を最優先にしましょう。`;
       detail=`この論点の正答率は${t.rate}%（${t.attempts}回回答）。${left<=7?'新しい論点より間違えた理由の確認を優先。':'応用問題で弱点を確認するのがおすすめです。'}`;
-      mode=`学習ナビ：${t.topic}`;pool=all.filter(q=>q.topic===t.topic&&q.difficulty!=='基礎');
+      mode=`学習ナビ：${topicLabel(t.topic)}`;pool=all.filter(q=>q.topic===t.topic&&q.difficulty!=='基礎');
       if(!pool.length)pool=all.filter(q=>q.topic===t.topic);
     }else if(left<=7){
       advice='直前期です。重要度Aの応用問題とミスの再確認に集中しましょう。';
@@ -245,7 +249,7 @@
       mode='直前期の総復習';pool=allowedChallenges().filter(q=>q.importance==='A');
       if(!pool.length)pool=allowedChallenges();
     }else if(unstudied.length){
-      advice=`未着手の「${unstudied[0].topic}」にも取り組みましょう。`;
+      advice=`未着手の「${topicLabel(unstudied[0].topic)}」にも取り組みましょう。`;
       detail='演習を進めると正答率に応じた学習アドバイスに切り替わります。';
       mode='未着手論点の練習';pool=eligible.filter(q=>q.topic===unstudied[0].topic);
       if(!pool.length)pool=all.filter(q=>q.topic===unstudied[0].topic);
@@ -307,7 +311,7 @@
     $('reflectionPanel').classList.add('hidden');$('reflectionResult').textContent='';
     $('counter').textContent=`${session.index+1} / ${session.queue.length}`;
     $('subjectBadge').textContent=q.subject.includes('商業')?'商会':'工原';
-    $('topicBadge').textContent=q.topic;
+    $('topicBadge').textContent=topicLabel(q.topic);
     $('importanceBadge').textContent=q.importance && q.importance!=='未設定' ? '重要度'+q.importance : '重要度未設定';
     $('importanceBadge').classList.toggle('hidden',!q.source || Boolean(q.series));
     $('typeBadge').textContent=typeLabel(q.type)+(q.difficulty?' · '+q.difficulty:'');
@@ -424,13 +428,13 @@
     $('resultScore').textContent=`${session.correct} / ${session.answered}問正解（${rate}%）`;
     $('resultMessage').textContent=rate>=80?'良いペースです。苦手問題は自動で次回の出題優先度が上がります。':rate>=60?'間違えた問題を翌日優先的に復習できるよう設定しました。':'苦手論点を優先出題に反映しました。短時間でも繰り返すのがおすすめです。';
     const sessionTopics=[...new Set(session.queue.map(q=>q.topic))].map(t=>({t,...topicAccuracy(t)})).filter(x=>x.attempts).sort((a,b)=>(a.rate??101)-(b.rate??101)).slice(0,3);
-    $('resultWeakTopics').innerHTML=sessionTopics.length?`<b>復習候補</b><br>${sessionTopics.map(x=>`${x.t}：${x.rate}%`).join('<br>')}`:'';showView('resultView');
+    $('resultWeakTopics').innerHTML=sessionTopics.length?`<b>復習候補</b><br>${sessionTopics.map(x=>`${topicLabel(x.t)}：${x.rate}%`).join('<br>')}`:'';showView('resultView');
   }
 
   function renderStats(){
     let a=0,c=0;Object.entries(state.qstats).forEach(([id,s])=>{if(!LIVE_IDS.has(id))return;a+=s.attempts;c+=s.correct;});$('sAnswered').textContent=a;$('sRate').textContent=a?`${Math.round(c/a*100)}%`:'--';$('sStreak').textContent=`${state.streak.days||0}日`;
-    const topics=[...new Set(QUESTIONS.map(q=>q.topic))];const wrap=$('topicStats');wrap.innerHTML='';topics.map(t=>({t,...topicAccuracy(t)})).sort((x,y)=>{if(x.rate===null)return 1;if(y.rate===null)return-1;return x.rate-y.rate;}).forEach(x=>{const d=document.createElement('div');d.className='topic-stat';d.innerHTML=`<div class="topic-stat-head"><span>${x.t}</span><b>${x.rate===null?'未学習':x.rate+'%'}</b></div><div class="mini-bar"><div style="width:${x.rate||0}%"></div></div>`;wrap.appendChild(d);});
-    const h=$('recentHistory');h.innerHTML=state.history.length?'': '<p class="muted">まだ学習履歴がありません。</p>';state.history.slice(0,12).forEach(x=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`${x.correct?'○':'×'} <b>${x.topic}</b> <span class="muted">${fmtDateTime(x.at)}</span>`;h.appendChild(d);});
+    const topics=[...new Set(QUESTIONS.map(q=>q.topic))];const wrap=$('topicStats');wrap.innerHTML='';topics.map(t=>({t,...topicAccuracy(t)})).sort((x,y)=>{if(x.rate===null)return 1;if(y.rate===null)return-1;return x.rate-y.rate;}).forEach(x=>{const d=document.createElement('div');d.className='topic-stat';d.innerHTML=`<div class="topic-stat-head"><span>${topicLabel(x.t)}</span><b>${x.rate===null?'未学習':x.rate+'%'}</b></div><div class="mini-bar"><div style="width:${x.rate||0}%"></div></div>`;wrap.appendChild(d);});
+    const h=$('recentHistory');h.innerHTML=state.history.length?'': '<p class="muted">まだ学習履歴がありません。</p>';state.history.slice(0,12).forEach(x=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`${x.correct?'○':'×'} <b>${topicLabel(x.topic)}</b> <span class="muted">${fmtDateTime(x.at)}</span>`;h.appendChild(d);});
   }
 
   $('kmAllBtn').addEventListener('click',()=>startQuiz('解法マスター｜総合',KAIHOU_QUESTIONS.filter(allowed),10,true));
