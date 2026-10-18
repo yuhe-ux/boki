@@ -207,6 +207,7 @@
     $('libraryStatsTitle').textContent=`教材対応${QUESTIONS.length}問（標準・応用${ACTIVE_QUESTIONS.length}問／基礎${BASIC_QUESTIONS.length}問）`;
     $('libraryStatsDesc').textContent=`CPA教材${CPA_QUESTIONS.length}問＋解法マスター${KAIHOU_QUESTIONS.length}問。標準・応用を中心に出題。すべて4択で電卓も使用できます。`;
     $('kmCount').textContent=`全${KAIHOU_QUESTIONS.length}問`;
+    $('kmCalcCount').textContent=`計算問題${KAIHOU_QUESTIONS.filter(q=>q.type==='number').length}問・理論${KAIHOU_QUESTIONS.filter(q=>q.type!=='number').length}問。問題・解答PDFの参照ページを表示します。`;
     $('kmSCount').textContent=`${KAIHOU_QUESTIONS.filter(q=>q.book==='KM-S').length}問`;
     $('kmGCount').textContent=`${KAIHOU_QUESTIONS.filter(q=>q.book==='KM-G').length}問`;
     $('dailyBtn').textContent=state.daily.count>=10?'✓ 今日の10問 完了（追加学習）':'▶ 今日の10問';
@@ -354,7 +355,9 @@
   }
   function showFeedback(q,correct,extra=''){
     const f=$('feedback');f.classList.remove('hidden');f.innerHTML=`<strong class="${correct?'good':'bad'}">${correct?'○ 正解！':'× 不正解'}</strong>${extra?`<div>${extra}</div>`:''}<div>${q.ex}</div><div class="muted" style="margin-top:6px;font-size:12px">次回復習目安：${qstat(q.id).nextDue}</div>`;$('nextBtn').classList.remove('hidden');
-    $('sourceRef').textContent=q.series==='解法マスター' ? `参照論点：${q.source}／第${q.chapter}回／PDF ${q.pdfPage}ページ。原問題とは別の独自作問です（本PDFは問題編）。` : (q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ' : (q.page ? '本文 p.'+q.page : '章・論点を参照（ページ番号未指定）')}。教材の論点を参考に独自作問。` : '参照教材を確認してください。');
+    $('sourceRef').textContent=q.series==='解法マスター'
+      ? `教材参照：${q.source} ／ 第${q.chapter}回 ／ 問題PDF p.${q.pdfPage}${q.answerPdfPage ? ` ／ ${q.answerSource} p.${q.answerPdfPage}` : ''}。問題は教材の解法を参考に独自作成したもので、教材本文の設問・数値とは異なります。`
+      : (q.source ? `教材の参照先：${q.source} ／ 第${q.chapter || '-'}章 ／ ${q.pdfPage ? 'PDF '+q.pdfPage+'ページ' : (q.page ? '本文 p.'+q.page : '章・論点を参照（ページ番号未指定）')}。教材の論点を参考に独自作問。` : '参照教材を確認してください。');
   }
 
 
@@ -431,6 +434,7 @@
   }
 
   $('kmAllBtn').addEventListener('click',()=>startQuiz('解法マスター｜総合',KAIHOU_QUESTIONS.filter(allowed),10,true));
+  $('kmCalcBtn').addEventListener('click',()=>startQuiz('解法マスター｜計算特訓',KAIHOU_QUESTIONS.filter(q=>q.type==='number'&&allowed(q)),10,true));
   $('kmSBtn').addEventListener('click',()=>startQuiz('解法マスター｜商会',KAIHOU_QUESTIONS.filter(q=>q.book==='KM-S'&&allowed(q)),10,true));
   $('kmGBtn').addEventListener('click',()=>startQuiz('解法マスター｜工原',KAIHOU_QUESTIONS.filter(q=>q.book==='KM-G'&&allowed(q)),10,true));
   $('dailyBtn').addEventListener('click',()=>startQuiz('今日の10問／標準・応用',allowedChallenges(),10,true));
@@ -458,7 +462,7 @@
   });
   $('exportBtn').addEventListener('click',()=>{
     try{
-      const blob=new Blob([JSON.stringify({app:'boki1-commute',version:9,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});
+      const blob=new Blob([JSON.stringify({app:'boki1-commute',version:11,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='boki1-learning-backup-'+today()+'.json';a.click();
       setTimeout(()=>URL.revokeObjectURL(url),1500);
       $('backupMessage').textContent='バックアップファイルを保存しました。';
